@@ -1,4 +1,3 @@
-
 import 'reflect-metadata'
 require('dotenv').config()
 import express from 'express'
@@ -9,6 +8,13 @@ import { ApolloServer } from 'apollo-server-express'
 import { buildSchema } from 'type-graphql'
 import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core';
 import { UserResolver } from './resolvers/User';
+import redis from 'redis';
+import session from 'express-session'
+import connectRedis from 'connect-redis'
+import { COOKIE_NAME, __prod__ } from './ultils/constant';
+// import { Context } from './types/Context';
+
+
 
 const main = async () => {
     await createConnection({
@@ -24,12 +30,36 @@ const main = async () => {
 
     const app = express()
 
+    const RedisStore = connectRedis(session)
+    const redisClient = redis.createClient()
+
+    app.use(
+        session({
+            name: COOKIE_NAME,
+            store: new RedisStore({
+                client: redisClient,
+                disableTouch: true,
+                disableTTL: true
+            }),
+            cookie: {
+                maxAge: 1000 * 60 * 60, // 1 hour
+                httpOnly: true, // JS fe cannot access cookie
+                sameSite: 'lax', // CSRF
+                secure: __prod__ // cookie only works in https
+            },
+            saveUninitialized: false,
+            secret: process.env.SESSION_SECRET as string,
+            resave: false
+        })
+    )
+
+
     const apolloServer = new ApolloServer({
         schema: await buildSchema({
             resolvers: [UserResolver],
             validate: false
         }),
-        context: ({ req, res }): any => ({ req, res }),
+        context: ({ req, res }) => ({ req, res, redis }),
         plugins: [ApolloServerPluginLandingPageGraphQLPlayground]
     })
 
