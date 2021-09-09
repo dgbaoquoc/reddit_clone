@@ -1,17 +1,19 @@
 import 'reflect-metadata'
 require('dotenv').config()
-import express from 'express'
-import { createConnection } from 'typeorm'
-import { User } from './entities/User'
-import { Post } from './entities/Post'
+
+import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core'
 import { ApolloServer } from 'apollo-server-express'
-import { buildSchema } from 'type-graphql'
-import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core';
-import { UserResolver } from './resolvers/User';
-import redis from 'redis';
-import session from 'express-session'
 import connectRedis from 'connect-redis'
-import { COOKIE_NAME, __prod__ } from './ultils/constant';
+import express from 'express'
+import session from 'express-session'
+import redis from 'redis'
+import { buildSchema } from 'type-graphql'
+import { createConnection } from 'typeorm'
+import { Post } from './entities/Post'
+import { User } from './entities/User'
+import { PostResolver } from './resolvers/Post'
+import { UserResolver } from './resolvers/User'
+import { COOKIE_NAME, __prod__ } from './ultils/constant'
 // import { Context } from './types/Context';
 
 
@@ -56,7 +58,7 @@ const main = async () => {
 
     const apolloServer = new ApolloServer({
         schema: await buildSchema({
-            resolvers: [UserResolver],
+            resolvers: [UserResolver, PostResolver],
             validate: false
         }),
         context: ({ req, res }) => ({ req, res, redis }),
