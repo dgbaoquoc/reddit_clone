@@ -14,6 +14,7 @@ import { User } from './entities/User'
 import { PostResolver } from './resolvers/Post'
 import { UserResolver } from './resolvers/User'
 import { COOKIE_NAME, __prod__ } from './ultils/constant'
+import cors from 'cors'
 // import { Context } from './types/Context';
 
 
@@ -31,6 +32,11 @@ const main = async () => {
     })
 
     const app = express()
+
+    app.use(cors({
+        origin: 'http://localhost:3000',
+        credentials: true
+    }))
 
     const RedisStore = connectRedis(session)
     const redisClient = redis.createClient()
