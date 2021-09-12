@@ -4,51 +4,51 @@ import { useRouter } from "next/router";
 import React from "react";
 import InputField from "../components/InputField";
 import Wrapper from "../components/Wrapper";
-import { RegisterInput, useRegisterMutation } from "../generated/graphql";
+import {
+  LoginInput,
+  RegisterInput,
+  useLoginMutation,
+  useRegisterMutation,
+} from "../generated/graphql";
 import { mapFieldErrors } from "../helpers/mapFieldErrors";
 
 // import { registerMutation } from "../graphql-client/mutation/mutation";
 
-const Register = () => {
+const Login = () => {
   const router = useRouter();
-  const [registerUser, { data, error, loading }] = useRegisterMutation();
+  const initialValues: LoginInput = {
+    usernameOrEmail: "",
+    password: "",
+  };
 
-  const onRegisterSubmit = async (
-    values: RegisterInput,
-    { setErrors }: FormikHelpers<RegisterInput>
+  const [loginUser, { loading, data, error }] = useLoginMutation();
+  const onLoginSubmit = async (
+    values: LoginInput,
+    { setErrors }: FormikHelpers<LoginInput>
   ) => {
-    const response = await registerUser({
+    const response = await loginUser({
       variables: {
-        registerInput: values,
+        loginInput: values,
       },
     });
 
-    if (response.data?.register.errors) {
-      setErrors(mapFieldErrors(response.data.register.errors));
-    } else if (response.data?.register.success) {
+    if (response.data?.login.errors) {
+      setErrors(mapFieldErrors(response.data.login.errors));
+    } else if (response.data?.login.success) {
       router.push("/");
     }
   };
+
   return (
     <Wrapper>
-      <Formik
-        initialValues={{ username: "", password: "", email: "" }}
-        onSubmit={onRegisterSubmit}
-      >
+      <Formik initialValues={initialValues} onSubmit={onLoginSubmit}>
         {({ isSubmitting }) => (
           <Form>
             <FormControl>
               <InputField
-                name="username"
-                placeholder="Username"
-                label="Username"
-                type="text"
-              />
-              <Box mt={4}></Box>
-              <InputField
-                name="email"
-                placeholder="Email"
-                label="Email"
+                name="usernameOrEmail"
+                placeholder="Username or Email"
+                label="Username or Email"
                 type="text"
               />
               <Box mt={4}></Box>
@@ -64,7 +64,7 @@ const Register = () => {
                 mt={4}
                 isLoading={isSubmitting}
               >
-                Register
+                Login
               </Button>
             </FormControl>
           </Form>
@@ -74,4 +74,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default Login;
