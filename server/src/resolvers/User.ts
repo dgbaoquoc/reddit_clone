@@ -12,9 +12,16 @@ import argon2 from 'argon2';
 
 @Resolver()
 export class UserResolver {
-    @Query(() => String)
-    hello() {
-        return 'hello world'
+    @Query(() => User, { nullable: true })
+    async me(
+        @Ctx() { req }: Context
+    ): Promise<User | null | undefined> {
+        if (!req.session.userId) {
+            return null
+        }
+
+        const user = User.findOne(req.session.userId)
+        return user
     }
 
     @Mutation(() => UserMutationResponse)
@@ -83,7 +90,7 @@ export class UserResolver {
     ): Promise<UserMutationResponse> {
         try {
             const { usernameOrEmail, password } = input
-            const existingUser = await User.findOne(usernameOrEmail.includes('@') ? { email: usernameOrEmail } : { username: usernameOrEmail })
+            const existingUser = await User.findOne(usernameOrEmail.includes('@') ? { email: usernameOrEmail.toLowerCase() } : { username: usernameOrEmail.toLowerCase() })
 
             if (!existingUser) {
                 return {
