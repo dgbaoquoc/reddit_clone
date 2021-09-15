@@ -1,11 +1,4 @@
-import {
-  FormControl,
-  Button,
-  Box,
-  Spinner,
-  Flex,
-  useToast,
-} from "@chakra-ui/react";
+import { Box, Button, Flex, Link, Spinner, useToast } from "@chakra-ui/react";
 import { Form, Formik, FormikHelpers } from "formik";
 import { useRouter } from "next/router";
 import React from "react";
@@ -15,12 +8,11 @@ import {
   LoginInput,
   MeDocument,
   MeQuery,
-  RegisterInput,
   useLoginMutation,
-  useRegisterMutation,
 } from "../generated/graphql";
 import { mapFieldErrors } from "../helpers/mapFieldErrors";
 import { useCheckAuth } from "../ultils/useCheckAuth";
+import NextLink from "next/link";
 
 // import { registerMutation } from "../graphql-client/mutation/mutation";
 
@@ -81,29 +73,32 @@ const Login = () => {
           <Formik initialValues={initialValues} onSubmit={onLoginSubmit}>
             {({ isSubmitting }) => (
               <Form>
-                <FormControl>
-                  <InputField
-                    name="usernameOrEmail"
-                    placeholder="Username or Email"
-                    label="Username or Email"
-                    type="text"
-                  />
-                  <Box mt={4}></Box>
-                  <InputField
-                    name="password"
-                    placeholder="Password"
-                    label="Password"
-                    type="password"
-                  />
-                  <Button
-                    type="submit"
-                    colorScheme="teal"
-                    mt={4}
-                    isLoading={isSubmitting}
-                  >
-                    Login
-                  </Button>
-                </FormControl>
+                <InputField
+                  name="usernameOrEmail"
+                  placeholder="Username or Email"
+                  label="Username or Email"
+                  type="text"
+                />
+                <Box mt={4}></Box>
+                <InputField
+                  name="password"
+                  placeholder="Password"
+                  label="Password"
+                  type="password"
+                />
+                <Flex mt={2} align="flex-end">
+                  <NextLink href="/forgot-password">
+                    <Link ml="auto">forgot password?</Link>
+                  </NextLink>
+                </Flex>
+                <Button
+                  type="submit"
+                  colorScheme="teal"
+                  mt={4}
+                  isLoading={isSubmitting}
+                >
+                  Login
+                </Button>
               </Form>
             )}
           </Formik>

@@ -1,3 +1,4 @@
+
 import 'reflect-metadata'
 require('dotenv').config()
 
@@ -6,7 +7,7 @@ import { ApolloServer } from 'apollo-server-express'
 import connectRedis from 'connect-redis'
 import express from 'express'
 import session from 'express-session'
-import redis from 'redis'
+import Redis from "ioredis";
 import { buildSchema } from 'type-graphql'
 import { createConnection } from 'typeorm'
 import { Post } from './entities/Post'
@@ -15,8 +16,6 @@ import { PostResolver } from './resolvers/Post'
 import { UserResolver } from './resolvers/User'
 import { COOKIE_NAME, __prod__ } from './ultils/constant'
 import cors from 'cors'
-// import { Context } from './types/Context';
-
 
 
 const main = async () => {
@@ -38,14 +37,15 @@ const main = async () => {
         credentials: true
     }))
 
-    const RedisStore = connectRedis(session)
-    const redisClient = redis.createClient()
+    const RedisStore = connectRedis(session);
+    const redis = new Redis(process.env.REDIS_URL);
+    app.set("trust proxy", 1);
 
     app.use(
         session({
             name: COOKIE_NAME,
             store: new RedisStore({
-                client: redisClient,
+                client: redis,
                 disableTouch: true,
                 disableTTL: true
             }),

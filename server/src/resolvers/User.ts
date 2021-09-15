@@ -1,4 +1,4 @@
-import { COOKIE_NAME } from './../ultils/constant';
+import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from './../ultils/constant';
 import { Context } from './../types/Context';
 import { LoginInput } from './../types/LoginInput';
 import { validateRegisterInput } from './../ultils/validateRegisterInput';
@@ -7,6 +7,8 @@ import { UserMutationResponse } from './../types/UserMutationResponse';
 import { User } from './../entities/User';
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import argon2 from 'argon2';
+import { sendMail } from './../ultils/sendEmail';
+import { v4 } from 'uuid'
 
 
 
@@ -116,7 +118,7 @@ export class UserResolver {
             req.session.userId = existingUser.id
 
             return {
-                code: 400,
+                code: 200,
                 success: true,
                 message: 'Login successfully',
                 user: existingUser
@@ -147,5 +149,107 @@ export class UserResolver {
                 resolve(true)
             })
         })
+    }
+
+    @Mutation(() => Boolean)
+    async forgotPassword(
+        @Arg('email') email: string,
+        @Ctx() { redis }: Context
+    ): Promise<boolean> {
+        const user = await User.findOne({ email })
+        if (!user) {
+            return true
+        }
+
+        const token = v4()
+
+        await redis.set(
+            FORGET_PASSWORD_PREFIX + token,
+            user.id,
+            "ex",
+            1000 * 60 * 60 * 24 * 3
+        ); // 3 days
+
+        await sendMail(
+            email,
+            'Forgot password.',
+            `<a href="http://localhost:3000/change-password/${token}" target="_blank">reset password</a>`
+        );
+
+        return true
+    }
+
+    @Mutation(() => UserMutationResponse)
+    async changePassword(
+        @Arg("token") token: string,
+        @Arg("newPassword") newPassword: string,
+        @Ctx() { redis, req }: Context
+    ): Promise<UserMutationResponse> {
+        if (newPassword.length <= 2) {
+            return {
+                code: 400,
+                success: false,
+                message: 'Invalid password',
+                errors: [
+                    { field: 'newPassword', message: 'Length must be greater than 2' }
+                ]
+            }
+        }
+        try {
+            const key = FORGET_PASSWORD_PREFIX + token
+            const userId = await redis.get(key)
+
+            if (!userId) {
+                return {
+                    code: 400,
+                    success: false,
+                    message: 'Invalid or expired token.',
+                    errors: [
+                        { field: 'token', message: 'Invalid or expired token.' }
+                    ]
+                }
+            }
+
+            const userIdNum = parseInt(userId)
+            const user = await User.findOne(userIdNum)
+
+            if (!user) {
+                return {
+                    code: 400,
+                    success: false,
+                    message: 'Invalid user',
+                    errors: [
+                        { field: 'token', message: 'Can not found any user is our system.' }
+                    ]
+                }
+            }
+
+            await User.update(
+                { id: userIdNum },
+                {
+                    password: await argon2.hash(newPassword)
+                }
+            )
+
+            await redis.del(key)
+
+            req.session.userId = user.id
+
+            return {
+                code: 200,
+                success: true,
+                message: 'Change password successfully',
+                user
+            }
+        } catch (error) {
+            console.log(error)
+            return {
+                code: 500,
+                success: false,
+                message: 'Unknown error'
+            }
+        }
+
+
     }
 }

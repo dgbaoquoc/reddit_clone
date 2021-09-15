@@ -1,11 +1,4 @@
-import {
-  FormControl,
-  Button,
-  Box,
-  Flex,
-  Spinner,
-  useToast,
-} from "@chakra-ui/react";
+import { Box, Button, Flex, Spinner, useToast } from "@chakra-ui/react";
 import { Form, Formik, FormikHelpers } from "formik";
 import { useRouter } from "next/router";
 import React from "react";
@@ -75,36 +68,34 @@ const Register = () => {
           >
             {({ isSubmitting }) => (
               <Form>
-                <FormControl>
-                  <InputField
-                    name="username"
-                    placeholder="Username"
-                    label="Username"
-                    type="text"
-                  />
-                  <Box mt={4}></Box>
-                  <InputField
-                    name="email"
-                    placeholder="Email"
-                    label="Email"
-                    type="text"
-                  />
-                  <Box mt={4}></Box>
-                  <InputField
-                    name="password"
-                    placeholder="Password"
-                    label="Password"
-                    type="password"
-                  />
-                  <Button
-                    type="submit"
-                    colorScheme="teal"
-                    mt={4}
-                    isLoading={isSubmitting}
-                  >
-                    Register
-                  </Button>
-                </FormControl>
+                <InputField
+                  name="username"
+                  placeholder="Username"
+                  label="Username"
+                  type="text"
+                />
+                <Box mt={4}></Box>
+                <InputField
+                  name="email"
+                  placeholder="Email"
+                  label="Email"
+                  type="text"
+                />
+                <Box mt={4}></Box>
+                <InputField
+                  name="password"
+                  placeholder="Password"
+                  label="Password"
+                  type="password"
+                />
+                <Button
+                  type="submit"
+                  colorScheme="teal"
+                  mt={4}
+                  isLoading={isSubmitting}
+                >
+                  Register
+                </Button>
               </Form>
             )}
           </Formik>
