@@ -15,7 +15,7 @@ const ForgotPassword = () => {
   const [forgotPassword] = useForgotPasswordMutation();
 
   return (
-    <Wrapper>
+    <Wrapper size="small">
       <Formik
         initialValues={initialValues}
         onSubmit={async (values) => {

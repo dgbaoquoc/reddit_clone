@@ -89,8 +89,11 @@ export type MutationUpdatePostArgs = {
 export type Post = {
   __typename?: 'Post';
   createdAt: Scalars['DateTime'];
+  creator: User;
+  creatorId: Scalars['Float'];
   id: Scalars['Float'];
   text: Scalars['String'];
+  textSnippet: Scalars['String'];
   title: Scalars['String'];
   updatedAt: Scalars['DateTime'];
 };
@@ -196,7 +199,7 @@ export type MeQuery = { __typename?: 'Query', me?: Maybe<{ __typename?: 'User', 
 export type PostsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type PostsQuery = { __typename?: 'Query', posts: Array<{ __typename?: 'Post', id: number, title: string, text: string, createdAt: any, updatedAt: any }> };
+export type PostsQuery = { __typename?: 'Query', posts: Array<{ __typename?: 'Post', id: number, title: string, text: string, textSnippet: string, createdAt: any, updatedAt: any, creator: { __typename?: 'User', username: string } }> };
 
 export const ResponseSnippetFragmentDoc = gql`
     fragment responseSnippet on UserMutationResponse {
@@ -432,8 +435,12 @@ export const PostsDocument = gql`
     id
     title
     text
+    textSnippet
     createdAt
     updatedAt
+    creator {
+      username
+    }
   }
 }
     `;

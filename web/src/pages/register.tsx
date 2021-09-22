@@ -61,7 +61,7 @@ const Register = () => {
           <Spinner />
         </Flex>
       ) : (
-        <Wrapper>
+        <Wrapper size="small">
           <Formik
             initialValues={{ username: "", password: "", email: "" }}
             onSubmit={onRegisterSubmit}

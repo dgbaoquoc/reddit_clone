@@ -23,7 +23,7 @@ const ChangePassword = () => {
     newPassword: "",
   };
   return (
-    <Wrapper>
+    <Wrapper size="small">
       <Formik
         initialValues={initialValues}
         onSubmit={async (values, { setErrors }) => {
