@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Flex,
   Heading,
   Link,
@@ -15,8 +16,23 @@ import NextLink from "next/link";
 import Layout from "../components/Layout";
 import PostButton from "../components/PostButton";
 
+const LIMIT_POST = 1;
+
 const Index = () => {
-  const { data, loading, error } = usePostsQuery();
+  const { data, loading, error, fetchMore, networkStatus } = usePostsQuery({
+    variables: {
+      limit: LIMIT_POST,
+    },
+    //re-render when status network changed
+    notifyOnNetworkStatusChange: true,
+  });
+
+  const loadMore = () =>
+    fetchMore({
+      variables: {
+        cursor: data?.posts.cursor,
+      },
+    });
 
   return (
     <Layout>
@@ -26,7 +42,7 @@ const Index = () => {
         </Flex>
       ) : (
         <Stack spacing={8}>
-          {data?.posts.map((post) => (
+          {data?.posts.paginatedPosts.map((post) => (
             <Flex key={post.id} p={5} shadow="md" borderWidth="1px">
               <Box flex={1}>
                 <NextLink href={`/post/${post.id}`}>
@@ -46,6 +62,14 @@ const Index = () => {
           ))}
         </Stack>
       )}
+
+      {data?.posts.hasMore && (
+        <Flex>
+          <Button m="auto" my={8} isLoading={loading} onClick={loadMore}>
+            load more
+          </Button>
+        </Flex>
+      )}
     </Layout>
   );
 };
@@ -55,6 +79,9 @@ export const getStaticProps = async () => {
 
   await apolloClient.query({
     query: PostsDocument,
+    variables: {
+      limit: LIMIT_POST,
+    },
   });
 
   return addApolloState(apolloClient, {

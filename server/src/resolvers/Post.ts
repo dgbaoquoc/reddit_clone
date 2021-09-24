@@ -1,11 +1,14 @@
+import { Context } from './../types/Context';
+import { PaginatedPosts } from './../types/PaginatedPost';
 
 import { isAuth } from './../middleware/auth';
 import { UpdatePostInput } from './../types/UpdatePostInput';
-import { Arg, FieldResolver, Int, Mutation, Query, Resolver, Root, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, FieldResolver, Int, Mutation, Query, Resolver, Root, UseMiddleware } from "type-graphql";
 import { Post } from './../entities/Post';
 import { CreatePostInput } from './../types/CreatePostInput';
 import { PostMutationResponse } from './../types/PostMutationResponse';
 import { User } from '../entities/User';
+import { LessThan } from 'typeorm';
 
 
 
@@ -23,12 +26,14 @@ export class PostResolver {
 
     @Mutation(() => PostMutationResponse)
     async createPost(
-        @Arg('createPostInput') { title, text }: CreatePostInput
+        @Arg('createPostInput') { title, text }: CreatePostInput,
+        @Ctx() { req }: Context
     ): Promise<PostMutationResponse> {
         try {
             const newPost = Post.create({
                 title,
-                text
+                text,
+                creatorId: req.session.userId
             })
 
             await Post.save(newPost)
@@ -48,9 +53,43 @@ export class PostResolver {
         }
     }
 
-    @Query(() => [Post])
-    async posts(): Promise<Post[]> {
-        return Post.find()
+    @Query(() => PaginatedPosts)
+    async posts(
+        @Arg('limit', () => Int) limit: number,
+        @Arg('cursor', { nullable: true }) cursor?: string
+    ): Promise<PaginatedPosts | null> {
+        const totalPostCount = await Post.count()
+        const realLimit = Math.min(10, limit)
+        const findOptions: { [key: string]: any } = {
+            order: {
+                createdAt: 'DESC'
+            },
+            take: realLimit
+        }
+
+        let lastPost: Post[] = []
+        if (cursor) {
+            findOptions.where = {
+                createdAt: LessThan(cursor)
+            }
+
+            let postSortASC = await Post.find({
+                order: {
+                    createdAt: 'ASC'
+                },
+                take: 1
+            })
+            lastPost = postSortASC
+        }
+
+        const posts = await Post.find(findOptions)
+        return {
+            // if cursor exist, lastpost created diff from lastpost from database => hasmore, else compare post length vs total post
+            hasMore: cursor ? posts[posts.length - 1].createdAt.toString() !== lastPost[0].createdAt.toString() : posts.length !== totalPostCount,
+            cursor: posts[posts.length - 1].createdAt,
+            total: totalPostCount,
+            paginatedPosts: posts
+        }
     }
 
     @Query(() => Post, { nullable: true })
@@ -63,7 +102,8 @@ export class PostResolver {
     @Mutation(() => PostMutationResponse)
     @UseMiddleware(isAuth)
     async updatePost(
-        @Arg('updatePostInput') { id, title, text }: UpdatePostInput
+        @Arg('updatePostInput') { id, title, text }: UpdatePostInput,
+        @Ctx() { req }: Context
     ): Promise<PostMutationResponse> {
         try {
             const post = await Post.findOne(id)
@@ -77,6 +117,13 @@ export class PostResolver {
 
             post.title = title
             post.text = text
+            if (post.creatorId != req.session.userId) {
+                return {
+                    code: 401,
+                    success: false,
+                    message: "Not authorized"
+                }
+            }
 
             await post.save()
 
@@ -99,7 +146,8 @@ export class PostResolver {
     @Mutation(() => PostMutationResponse)
     @UseMiddleware(isAuth)
     async deletePost(
-        @Arg('id', () => Int) id: number
+        @Arg('id', () => Int) id: number,
+        @Ctx() { req }: Context
     ): Promise<PostMutationResponse> {
         try {
             const post = await Post.findOne(id)
@@ -108,6 +156,13 @@ export class PostResolver {
                     code: 400,
                     success: false,
                     message: "Post not found"
+                }
+            }
+            if (post.creatorId != req.session.userId) {
+                return {
+                    code: 401,
+                    success: false,
+                    message: "Not authorized"
                 }
             }
 
