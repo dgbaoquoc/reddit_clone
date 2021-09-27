@@ -15,8 +15,9 @@ import { addApolloState, initializeApollo } from "../lib/apolloClient";
 import NextLink from "next/link";
 import Layout from "../components/Layout";
 import PostButton from "../components/PostButton";
+import { NetworkStatus } from "@apollo/client";
 
-const LIMIT_POST = 1;
+const LIMIT_POST = 2;
 
 const Index = () => {
   const { data, loading, error, fetchMore, networkStatus } = usePostsQuery({
@@ -27,6 +28,8 @@ const Index = () => {
     notifyOnNetworkStatusChange: true,
   });
 
+  const loadingMorePosts = networkStatus === NetworkStatus.fetchMore;
+
   const loadMore = () =>
     fetchMore({
       variables: {
@@ -36,7 +39,7 @@ const Index = () => {
 
   return (
     <Layout>
-      {loading ? (
+      {loading && !loadingMorePosts ? (
         <Flex justifyContent="center" alignItems="center" minH="100vh">
           <Spinner />
         </Flex>
